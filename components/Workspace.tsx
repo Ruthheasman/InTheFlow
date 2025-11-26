@@ -9,6 +9,8 @@ import { VideoGen } from './tools/VideoGen';
 import { ScriptGen } from './tools/ScriptGen';
 import { VoiceGen } from './tools/VoiceGen';
 import { Sequencer } from './tools/Sequencer';
+import { ImageSource } from './tools/ImageSource';
+import { VideoSource } from './tools/VideoSource';
 
 interface WorkspaceProps {
   nodes: NodeData[];
@@ -113,6 +115,10 @@ export const Workspace: React.FC<WorkspaceProps> = ({ nodes, setNodes, isDarkMod
         return <ScriptGen type="script" {...commonProps} />;
       case ToolType.SEQUENCER:
         return <Sequencer inputs={allInputs} />;
+      case ToolType.IMAGE_SOURCE:
+        return <ImageSource {...commonProps} />;
+      case ToolType.VIDEO_SOURCE:
+        return <VideoSource {...commonProps} />;
       default:
         return <div className="p-4 text-gray-400 dark:text-gray-500">Tool not implemented yet.</div>;
     }

@@ -8,6 +8,8 @@ export enum ToolType {
   SCRIPT_WRITER = 'SCRIPT_WRITER',
   PODCAST_GEN = 'PODCAST_GEN',
   SEQUENCER = 'SEQUENCER',
+  IMAGE_SOURCE = 'IMAGE_SOURCE',
+  VIDEO_SOURCE = 'VIDEO_SOURCE',
 }
 
 export interface NodeData {

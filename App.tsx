@@ -32,6 +32,15 @@ export default function App() {
     alert("Starting global generation sequence...");
   };
 
+  const handleOpenApiKey = async () => {
+    const win = window as any;
+    if (win.aistudio && win.aistudio.openSelectKey) {
+      await win.aistudio.openSelectKey();
+    } else {
+      alert("API Key selection is managed by the AI Studio environment when generating videos.");
+    }
+  };
+
   return (
     <div className={darkMode ? 'dark' : ''}>
       <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200">
@@ -47,6 +56,14 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3">
+               <button 
+                 onClick={handleOpenApiKey}
+                 className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                 title="Manage API Key"
+               >
+                  <Icons.Key className="w-5 h-5" />
+               </button>
+
                <button 
                  onClick={() => setDarkMode(!darkMode)}
                  className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
