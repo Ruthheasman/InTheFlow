@@ -1,0 +1,5 @@
+{
+  "name": "In The Flow",
+  "description": "A multimodal creative workspace interface allowing users to generate images, videos, scripts, and audio using Gemini 2.5 and Veo models in a node-based environment.",
+  "requestFramePermissions": []
+}
