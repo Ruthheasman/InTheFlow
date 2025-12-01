@@ -13,6 +13,7 @@ export const ScriptGen: React.FC<ScriptGenProps> = ({ type, onOutputChange }) =>
   const [result, setResult] = useState('');
   const [sources, setSources] = useState<{url: string, title: string}[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const getConfig = () => {
     switch(type) {
@@ -61,6 +62,17 @@ export const ScriptGen: React.FC<ScriptGenProps> = ({ type, onOutputChange }) =>
     }
   };
 
+  const handleCopy = async () => {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(result);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy', err);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -94,10 +106,19 @@ export const ScriptGen: React.FC<ScriptGenProps> = ({ type, onOutputChange }) =>
       {error && <p className="text-xs text-red-500">{error}</p>}
 
       {result && (
-        <div className="mt-4">
-           <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-sm text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto whitespace-pre-wrap">
+        <div className="mt-4 relative group">
+           <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-sm text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto whitespace-pre-wrap pr-10">
              {result}
            </div>
+           
+           <button
+             onClick={handleCopy}
+             className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
+             title="Copy to clipboard"
+           >
+             {copied ? <Icons.Check className="w-4 h-4 text-green-500" /> : <Icons.Copy className="w-4 h-4" />}
+           </button>
+
            {sources.length > 0 && (
              <div className="mt-2">
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Sources:</p>
