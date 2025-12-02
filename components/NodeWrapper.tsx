@@ -9,6 +9,7 @@ interface NodeWrapperProps {
   color: string;
   icon: React.FC<{ className?: string }>;
   onMove: (id: string, x: number, y: number) => void;
+  onMoveEnd: (id: string) => void;
   onRemove: (id: string) => void;
   onConnectStart: (nodeId: string, handleType: 'source') => void;
   onConnectEnd: (nodeId: string) => void;
@@ -23,6 +24,7 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
   color,
   icon: Icon,
   onMove,
+  onMoveEnd,
   onRemove,
   onConnectStart,
   onConnectEnd,
@@ -46,6 +48,21 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
     setIsDragging(true);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Prevent dragging if clicking close or controls
+    if ((e.target as HTMLElement).closest('button')) return;
+
+    if (nodeRef.current) {
+      const rect = nodeRef.current.getBoundingClientRect();
+      const touch = e.touches[0];
+      setOffset({
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      });
+    }
+    setIsDragging(true);
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
@@ -55,20 +72,46 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
       }
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDragging) {
+        // Prevent scrolling on touch devices while dragging
+        if (e.cancelable) e.preventDefault();
+        
+        const touch = e.touches[0];
+        const newX = touch.clientX - offset.x - 256;
+        const newY = touch.clientY - offset.y;
+        onMove(id, newX, newY);
+      }
+    };
+
     const handleMouseUp = () => {
-      setIsDragging(false);
+      if (isDragging) {
+        setIsDragging(false);
+        onMoveEnd(id);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        onMoveEnd(id);
+      }
     };
 
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleTouchEnd);
     }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isDragging, offset, id, onMove]);
+  }, [isDragging, offset, id, onMove, onMoveEnd]);
 
   return (
     <div
@@ -85,25 +128,40 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
       <div 
         className="absolute -left-3 top-8 w-6 h-6 flex items-center justify-center cursor-crosshair z-20"
         onMouseUp={() => onConnectEnd(id)}
+        onTouchEnd={() => onConnectEnd(id)}
       >
         <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-gray-800 rounded-full hover:bg-indigo-500 hover:scale-125 transition-all shadow-sm" />
       </div>
 
       {/* Header / Drag Handle */}
       <div
-        className={`node-drag-handle p-3 rounded-t-xl flex items-center justify-between border-b border-gray-100 dark:border-gray-700 ${color} bg-opacity-20 dark:bg-opacity-20 cursor-grab active:cursor-grabbing select-none`}
+        className={`node-drag-handle p-3 rounded-t-xl flex items-center justify-between border-b border-gray-100 dark:border-gray-700 ${color} bg-opacity-20 dark:bg-opacity-20 cursor-grab active:cursor-grabbing select-none touch-none`}
+        style={{ touchAction: 'none' }}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pointer-events-none">
           <Icon className="w-5 h-5 opacity-70" />
           <span className="font-semibold text-sm text-gray-700 dark:text-gray-200">{title}</span>
         </div>
-        <button 
-          onClick={() => onRemove(id)}
-          className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors p-1"
-        >
-          <Icons.X className="w-4 h-4" />
-        </button>
+        
+        <div className="flex items-center gap-2">
+          {/* Visual Grip Handle for Mobile */}
+          <div className="md:hidden text-gray-400 dark:text-gray-500 opacity-50">
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="9" x2="16" y2="9"></line><line x1="8" y1="15" x2="16" y2="15"></line></svg>
+          </div>
+
+          <button 
+            onClick={() => onRemove(id)}
+            className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors p-1"
+            onTouchEnd={(e) => {
+                 e.stopPropagation();
+                 onRemove(id);
+            }}
+          >
+            <Icons.X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -115,6 +173,10 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
       <div 
         className="absolute -right-3 top-8 w-6 h-6 flex items-center justify-center cursor-crosshair z-20"
         onMouseDown={(e) => {
+            e.stopPropagation();
+            onConnectStart(id, 'source');
+        }}
+        onTouchStart={(e) => {
             e.stopPropagation();
             onConnectStart(id, 'source');
         }}

@@ -15,11 +15,22 @@ import { VideoSource } from './tools/VideoSource';
 interface WorkspaceProps {
   nodes: NodeData[];
   setNodes: React.Dispatch<React.SetStateAction<NodeData[]>>;
+  connections: Connection[];
+  setConnections: React.Dispatch<React.SetStateAction<Connection[]>>;
+  saveHistory: (nodes: NodeData[], connections: Connection[]) => void;
+  updateCurrentHistoryState: (nodes: NodeData[], connections: Connection[]) => void;
   isDarkMode: boolean;
 }
 
-export const Workspace: React.FC<WorkspaceProps> = ({ nodes, setNodes, isDarkMode }) => {
-  const [connections, setConnections] = useState<Connection[]>([]);
+export const Workspace: React.FC<WorkspaceProps> = ({ 
+    nodes, 
+    setNodes, 
+    connections, 
+    setConnections, 
+    saveHistory,
+    updateCurrentHistoryState,
+    isDarkMode 
+}) => {
   const [connectingSourceId, setConnectingSourceId] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState<{x: number, y: number} | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -28,13 +39,26 @@ export const Workspace: React.FC<WorkspaceProps> = ({ nodes, setNodes, isDarkMod
     setNodes(prev => prev.map(n => n.id === id ? { ...n, x, y } : n));
   };
 
+  const handleMoveEnd = (id: string) => {
+    // Commit the new position to history
+    saveHistory(nodes, connections);
+  };
+
   const handleRemove = (id: string) => {
-    setNodes(prev => prev.filter(n => n.id !== id));
-    setConnections(prev => prev.filter(c => c.sourceId !== id && c.targetId !== id));
+    const nextNodes = nodes.filter(n => n.id !== id);
+    const nextConnections = connections.filter(c => c.sourceId !== id && c.targetId !== id);
+    
+    setNodes(nextNodes);
+    setConnections(nextConnections);
+    saveHistory(nextNodes, nextConnections);
   };
 
   const handleUpdateNodeOutput = (id: string, outputData: any) => {
-    setNodes(prev => prev.map(n => n.id === id ? { ...n, outputData } : n));
+    const nextNodes = nodes.map(n => n.id === id ? { ...n, outputData } : n);
+    setNodes(nextNodes);
+    // We update the current history state in-place to ensure data isn't lost on future undos,
+    // but we don't create a new undo step for content generation.
+    updateCurrentHistoryState(nextNodes, connections);
   };
 
   // Connection Logic
@@ -47,11 +71,13 @@ export const Workspace: React.FC<WorkspaceProps> = ({ nodes, setNodes, isDarkMod
       // Check if exists
       const exists = connections.find(c => c.sourceId === connectingSourceId && c.targetId === targetId);
       if (!exists) {
-        setConnections(prev => [...prev, {
+        const nextConnections = [...connections, {
           id: `${connectingSourceId}-${targetId}`,
           sourceId: connectingSourceId,
           targetId: targetId
-        }]);
+        }];
+        setConnections(nextConnections);
+        saveHistory(nodes, nextConnections);
       }
     }
     setConnectingSourceId(null);
@@ -201,6 +227,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({ nodes, setNodes, isDarkMod
               color={toolDef.color}
               icon={toolDef.icon}
               onMove={handleMove}
+              onMoveEnd={handleMoveEnd}
               onRemove={handleRemove}
               onConnectStart={handleConnectStart}
               onConnectEnd={handleConnectEnd}
