@@ -114,8 +114,16 @@ export const VideoGen: React.FC<VideoGenProps> = ({ inputData, onOutputChange })
       {error && <p className="text-xs text-red-500">{error}</p>}
 
       {result && (
-        <div className="mt-4 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-black">
+        <div className="mt-4 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-black relative group">
            <video controls src={result} className="w-full h-auto aspect-video" />
+           <a 
+              href={result} 
+              download="generated-video.mp4" 
+              className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              title="Download Video"
+           >
+              <Icons.Download className="w-4 h-4" />
+           </a>
         </div>
       )}
     </div>

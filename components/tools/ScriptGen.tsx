@@ -73,6 +73,17 @@ export const ScriptGen: React.FC<ScriptGenProps> = ({ type, onOutputChange }) =>
     }
   };
 
+  const handleDownload = () => {
+    if (!result) return;
+    const blob = new Blob([result], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${type}-generation.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -111,13 +122,22 @@ export const ScriptGen: React.FC<ScriptGenProps> = ({ type, onOutputChange }) =>
              {result}
            </div>
            
-           <button
-             onClick={handleCopy}
-             className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
-             title="Copy to clipboard"
-           >
-             {copied ? <Icons.Check className="w-4 h-4 text-green-500" /> : <Icons.Copy className="w-4 h-4" />}
-           </button>
+           <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+               <button
+                 onClick={handleCopy}
+                 className="p-1.5 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                 title="Copy to clipboard"
+               >
+                 {copied ? <Icons.Check className="w-4 h-4 text-green-500" /> : <Icons.Copy className="w-4 h-4" />}
+               </button>
+               <button
+                 onClick={handleDownload}
+                 className="p-1.5 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                 title="Download as text file"
+               >
+                 <Icons.Download className="w-4 h-4" />
+               </button>
+           </div>
 
            {sources.length > 0 && (
              <div className="mt-2">

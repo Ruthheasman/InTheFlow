@@ -76,8 +76,16 @@ export const VoiceGen: React.FC<VoiceGenProps> = ({ onOutputChange }) => {
       {error && <p className="text-xs text-red-500">{error}</p>}
 
       {audioSrc && (
-        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-           <audio controls src={audioSrc} className="w-full h-8" />
+        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-2">
+           <audio controls src={audioSrc} className="flex-1 h-8" />
+           <a 
+              href={audioSrc} 
+              download="generated-speech.mp3" 
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition-colors"
+              title="Download Audio"
+           >
+              <Icons.Download className="w-4 h-4" />
+           </a>
         </div>
       )}
     </div>

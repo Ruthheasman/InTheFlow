@@ -8,6 +8,7 @@ interface NodeWrapperProps {
   title: string;
   color: string;
   icon: React.FC<{ className?: string }>;
+  pan: { x: number, y: number }; // Received pan offset
   onMove: (id: string, x: number, y: number) => void;
   onMoveEnd: (id: string) => void;
   onRemove: (id: string) => void;
@@ -23,6 +24,7 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
   title,
   color,
   icon: Icon,
+  pan,
   onMove,
   onMoveEnd,
   onRemove,
@@ -38,6 +40,9 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
     // Prevent dragging if clicking close or controls
     if ((e.target as HTMLElement).closest('button')) return;
     
+    // Stop propagation so workspace doesn't pan
+    e.stopPropagation();
+
     if (nodeRef.current) {
       const rect = nodeRef.current.getBoundingClientRect();
       setOffset({
@@ -51,23 +56,30 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
   const handleTouchStart = (e: React.TouchEvent) => {
     // Prevent dragging if clicking close or controls
     if ((e.target as HTMLElement).closest('button')) return;
-
-    if (nodeRef.current) {
-      const rect = nodeRef.current.getBoundingClientRect();
-      const touch = e.touches[0];
-      setOffset({
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
-      });
+    
+    // Stop propagation only if single touch (intended drag)
+    // If multi-touch, let it bubble for pan/zoom on workspace
+    if (e.touches.length === 1) {
+        e.stopPropagation();
+        
+        if (nodeRef.current) {
+          const rect = nodeRef.current.getBoundingClientRect();
+          const touch = e.touches[0];
+          setOffset({
+            x: touch.clientX - rect.left,
+            y: touch.clientY - rect.top
+          });
+        }
+        setIsDragging(true);
     }
-    setIsDragging(true);
   };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
-        const newX = e.clientX - offset.x - 256; // 256 is sidebar width
-        const newY = e.clientY - offset.y;
+        // Calculate new position relative to canvas origin, accounting for sidebar (256) and pan
+        const newX = e.clientX - offset.x - 256 - pan.x;
+        const newY = e.clientY - offset.y - pan.y;
         onMove(id, newX, newY);
       }
     };
@@ -78,8 +90,8 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
         if (e.cancelable) e.preventDefault();
         
         const touch = e.touches[0];
-        const newX = touch.clientX - offset.x - 256;
-        const newY = touch.clientY - offset.y;
+        const newX = touch.clientX - offset.x - 256 - pan.x;
+        const newY = touch.clientY - offset.y - pan.y;
         onMove(id, newX, newY);
       }
     };
@@ -111,7 +123,7 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isDragging, offset, id, onMove, onMoveEnd]);
+  }, [isDragging, offset, id, onMove, onMoveEnd, pan]);
 
   return (
     <div
@@ -122,13 +134,13 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
         width: '400px',
         zIndex: isDragging ? 50 : 10
       }}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col transition-all hover:shadow-xl group"
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col transition-shadow hover:shadow-xl group"
     >
       {/* Input Handle (Left) */}
       <div 
         className="absolute -left-3 top-8 w-6 h-6 flex items-center justify-center cursor-crosshair z-20"
-        onMouseUp={() => onConnectEnd(id)}
-        onTouchEnd={() => onConnectEnd(id)}
+        onMouseUp={(e) => { e.stopPropagation(); onConnectEnd(id); }}
+        onTouchEnd={(e) => { e.stopPropagation(); onConnectEnd(id); }}
       >
         <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-gray-800 rounded-full hover:bg-indigo-500 hover:scale-125 transition-all shadow-sm" />
       </div>
@@ -152,7 +164,7 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
           </div>
 
           <button 
-            onClick={() => onRemove(id)}
+            onClick={(e) => { e.stopPropagation(); onRemove(id); }}
             className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors p-1"
             onTouchEnd={(e) => {
                  e.stopPropagation();
@@ -165,7 +177,11 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
       </div>
 
       {/* Content */}
-      <div className="p-4 bg-white dark:bg-gray-800 rounded-b-xl min-h-[100px] transition-colors">
+      <div 
+        className="p-4 bg-white dark:bg-gray-800 rounded-b-xl min-h-[100px] transition-colors"
+        onMouseDown={(e) => e.stopPropagation()} // Stop propagation on content interaction too
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         {children}
       </div>
 
