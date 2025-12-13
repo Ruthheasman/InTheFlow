@@ -138,7 +138,7 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
     >
       {/* Input Handle (Left) */}
       <div 
-        className="absolute -left-3 top-8 w-6 h-6 flex items-center justify-center cursor-crosshair z-20"
+        className="absolute -left-3 top-8 w-6 h-6 flex items-center justify-center cursor-crosshair z-30"
         onMouseUp={(e) => { e.stopPropagation(); onConnectEnd(id); }}
         onTouchEnd={(e) => { e.stopPropagation(); onConnectEnd(id); }}
       >
@@ -187,7 +187,7 @@ export const NodeWrapper: React.FC<NodeWrapperProps> = ({
 
       {/* Output Handle (Right) */}
       <div 
-        className="absolute -right-3 top-8 w-6 h-6 flex items-center justify-center cursor-crosshair z-20"
+        className="absolute -right-3 top-8 w-6 h-6 flex items-center justify-center cursor-crosshair z-30"
         onMouseDown={(e) => {
             e.stopPropagation();
             onConnectStart(id, 'source');

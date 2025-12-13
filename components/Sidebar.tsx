@@ -15,7 +15,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onAddTool }) => {
             <Icons.Wave className="w-5 h-5" />
           </div>
           <h1 className="text-2xl font-normal font-['Pacifico'] bg-clip-text text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-500 tracking-wide">
-            InTheFlow
+            intheflow
           </h1>
         </div>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 pl-1">Multimodal Creative Studio</p>
